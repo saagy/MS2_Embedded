@@ -1,0 +1,14 @@
+# Build output (regenerate with CMake)
+build/
+*.uf2
+*.elf
+*.bin
+*.hex
+*.dis
+*.map
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
