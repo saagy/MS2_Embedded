@@ -1,7 +1,8 @@
 """Live tic-tac-toe board reader from the overhead USB webcam (Team 08).
 
-Usage:  python board_detect.py [camera_index] [--port COM5]
-        Camera defaults to 1. The optional port uses test_minimax_usb firmware.
+Usage:  python board_detect.py [camera_index] [--port COM5] [--wifi 172.20.10.2]
+        Camera defaults to 1. --port uses test_minimax_usb firmware (USB cable),
+        --wifi uses test_wifi_minimax firmware (board sent over Wi-Fi to the ESP-01S).
 
 Steps:
   1. Line the EMPTY board up with the green 3x3 grid.
@@ -11,7 +12,7 @@ Steps:
      still for half a second.
 Keys:  c = calibrate (empty board)   d = debug numbers on/off
        s = save snapshot            q = quit
-       m = ask the Pico for a move from the current stable board (with --port)
+       m = ask the Pico for a move from the current stable board (--port or --wifi)
 """
 import argparse
 import sys
@@ -23,12 +24,15 @@ STABLE_FRAMES = 15          # board must stay the same this many frames
 parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
 parser.add_argument("camera_index", nargs="?", type=int, default=1)
 parser.add_argument("--port", help="USB serial port for test_minimax_usb")
+parser.add_argument("--wifi", metavar="ESP_IP", help="ESP-01S IP for test_wifi_minimax")
 args = parser.parse_args()
 
 solver = None
 if args.port:
     import serial
     solver = serial.Serial(args.port, 115200, timeout=1)
+if args.wifi:
+    import wifi_minimax_test as wifi   # ask(board, ip) -> "MOVE 4" etc.
 
 cap = cv2.VideoCapture(args.camera_index, cv2.CAP_DSHOW)
 if not cap.isOpened():
@@ -43,8 +47,9 @@ last_board, same_count, printed = None, 0, None
 COL = {"X": (255, 0, 0), "O": (0, 0, 255), "?": (0, 200, 255), ".": (160, 160, 160)}
 
 print("Line the EMPTY board up with the grid, click the window, press c.")
-if solver:
-    print("Press m to send a stable board to the Pico.")
+if solver or args.wifi:
+    print("Press m to send a stable board to the Pico"
+          + (f" over Wi-Fi ({args.wifi})." if args.wifi else "."))
 while True:
     ok, frame = cap.read()
     if not ok:
@@ -95,14 +100,20 @@ while True:
         cv2.imwrite("board_snapshot.png", frame)
         cv2.imwrite("board_snapshot_marked.png", view)
         print("Saved board_snapshot.png and board_snapshot_marked.png")
-    elif k == ord('m') and solver:
+    elif k == ord('m') and (solver or args.wifi):
         if last_board is None or same_count < STABLE_FRAMES or "?" in last_board:
             print("Wait for a stable board with all cells recognized.")
             continue
         payload = "".join(last_board)
-        solver.reset_input_buffer()
-        solver.write((payload + "\n").encode("ascii"))
-        response = solver.readline().decode("ascii", errors="replace").strip()
+        if args.wifi:
+            try:
+                response = wifi.ask(payload, args.wifi)
+            except OSError as e:
+                response = f"Wi-Fi error: {e}"
+        else:
+            solver.reset_input_buffer()
+            solver.write((payload + "\n").encode("ascii"))
+            response = solver.readline().decode("ascii", errors="replace").strip()
         print(f"Pico for {payload}: {response or 'no response'}")
     elif k == ord('q'):
         break
