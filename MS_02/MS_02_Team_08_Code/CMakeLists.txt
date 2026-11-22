@@ -1,7 +1,13 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+set(PICO_BOARD pico_w CACHE STRING "Board type")
+
+# Works with PICO_SDK_PATH set as an env var or by the VS Code Pico extension
+if(NOT PICO_SDK_PATH AND DEFINED ENV{PICO_SDK_PATH})
+    set(PICO_SDK_PATH $ENV{PICO_SDK_PATH})
+endif()
+include(${PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 project(tictactoe_lcd C CXX ASM)
 
@@ -27,3 +33,94 @@ pico_enable_stdio_usb(tictactoe_lcd 1)
 pico_enable_stdio_uart(tictactoe_lcd 0)
 
 pico_add_extra_outputs(tictactoe_lcd)
+
+# ---- Hardware test: RGB LED only (Phase 1) ----
+add_executable(test_rgb
+    test_rgb.c
+    rgb_led.c
+)
+target_link_libraries(test_rgb
+    pico_stdlib
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_rgb 1)
+pico_enable_stdio_uart(test_rgb 0)
+pico_add_extra_outputs(test_rgb)
+
+# ---- Hardware test: potentiometers + status LED (Phase 3) ----
+add_executable(test_pots
+    test_pots.c
+    pot.c
+    rgb_led.c
+)
+target_link_libraries(test_pots
+    pico_stdlib
+    hardware_adc
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_pots 1)
+pico_enable_stdio_uart(test_pots 0)
+pico_add_extra_outputs(test_pots)
+
+# ---- Diagnostic: button + buzzer wiring ----
+add_executable(test_io
+    test_io.c
+    rgb_led.c
+)
+target_link_libraries(test_io
+    pico_stdlib
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_io 1)
+pico_enable_stdio_uart(test_io 0)
+pico_add_extra_outputs(test_io)
+
+# ---- Hardware test: buzzer tones + button ----
+add_executable(test_buzzer
+    test_buzzer.c
+    buzzer.c
+    button.c
+)
+target_link_libraries(test_buzzer
+    pico_stdlib
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_buzzer 1)
+pico_enable_stdio_uart(test_buzzer 0)
+pico_add_extra_outputs(test_buzzer)
+
+# ---- Diagnostic: which pins are wired to GND ----
+add_executable(test_scan test_scan.c)
+target_link_libraries(test_scan pico_stdlib)
+pico_enable_stdio_usb(test_scan 1)
+pico_enable_stdio_uart(test_scan 0)
+pico_add_extra_outputs(test_scan)
+
+# ---- Hardware test: 12 V DC motors via L298N (Phase 5/6) ----
+add_executable(test_motor
+    test_motor.c
+    motor.c
+    button.c
+    rgb_led.c
+)
+target_link_libraries(test_motor
+    pico_stdlib
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_motor 1)
+pico_enable_stdio_uart(test_motor 0)
+pico_add_extra_outputs(test_motor)
+
+# ---- Hardware test: laptop <-> Pico serial link (Phase 8) ----
+add_executable(test_link
+    test_link.c
+    rgb_led.c
+    button.c
+)
+target_link_libraries(test_link
+    pico_stdlib
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_link 1)
+pico_enable_stdio_uart(test_link 0)
+pico_add_extra_outputs(test_link)

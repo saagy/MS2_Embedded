@@ -5,7 +5,7 @@
 
 // Buzzer driver (PWM). Works with passive buzzers (any pitch) and
 // active buzzers (they just beep at their own fixed pitch).
-#define BUZZER_PIN 15   // GP15, pin 20
+#define BUZZER_PIN 14   // GP14, pin 19
 
 void buzzer_init(void);
 void buzzer_tone(uint16_t freq_hz);              // start a tone

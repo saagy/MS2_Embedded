@@ -9,7 +9,7 @@
 
 #define POT1_PIN   26 // GP26, pin 31  -> "Powered On"
 #define POT2_PIN   27 // GP27, pin 32  -> "Engaged"
-#define BUTTON_PIN 14 // GP14, pin 19  -> "Confirm Move"
+#define BUTTON_PIN 15 // GP15, pin 20  -> "Confirm Move"
 
 // Hysteresis so the mode doesn't flicker when a knob sits at the middle
 #define ON_ABOVE  60  // %  turned clockwise past this -> ON

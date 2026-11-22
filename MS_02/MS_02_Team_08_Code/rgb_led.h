@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 // RGB LED driver (PWM, so each colour has 0..255 brightness).
-#define RGB_PIN_R 10   // GP10, pin 14
-#define RGB_PIN_G 11   // GP11, pin 15
-#define RGB_PIN_B 12   // GP12, pin 16
+#define RGB_PIN_R 16   // GP16, pin 21
+#define RGB_PIN_G 17   // GP17, pin 22
+#define RGB_PIN_B 18   // GP18, pin 24
 
 // Set to 1 if the LED's long leg goes to 3V3 (common anode),
 // 0 if it goes to GND (common cathode).
