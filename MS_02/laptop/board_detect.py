@@ -1,6 +1,7 @@
 """Live tic-tac-toe board reader from the overhead USB webcam (Team 08).
 
-Usage:  python board_detect.py [camera_index]      (default camera 1)
+Usage:  python board_detect.py [camera_index] [--port COM5]
+        Camera defaults to 1. The optional port uses test_minimax_usb firmware.
 
 Steps:
   1. Line the EMPTY board up with the green 3x3 grid.
@@ -10,17 +11,28 @@ Steps:
      still for half a second.
 Keys:  c = calibrate (empty board)   d = debug numbers on/off
        s = save snapshot            q = quit
+       m = ask the Pico for a move from the current stable board (with --port)
 """
+import argparse
 import sys
 import cv2
 import board_vision as bv
 
 STABLE_FRAMES = 15          # board must stay the same this many frames
 
-index = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
+parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+parser.add_argument("camera_index", nargs="?", type=int, default=1)
+parser.add_argument("--port", help="USB serial port for test_minimax_usb")
+args = parser.parse_args()
+
+solver = None
+if args.port:
+    import serial
+    solver = serial.Serial(args.port, 115200, timeout=1)
+
+cap = cv2.VideoCapture(args.camera_index, cv2.CAP_DSHOW)
 if not cap.isOpened():
-    sys.exit(f"Camera {index} not found. Run camera_check.py.")
+    sys.exit(f"Camera {args.camera_index} not found. Run camera_check.py.")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
@@ -31,6 +43,8 @@ last_board, same_count, printed = None, 0, None
 COL = {"X": (255, 0, 0), "O": (0, 0, 255), "?": (0, 200, 255), ".": (160, 160, 160)}
 
 print("Line the EMPTY board up with the grid, click the window, press c.")
+if solver:
+    print("Press m to send a stable board to the Pico.")
 while True:
     ok, frame = cap.read()
     if not ok:
@@ -81,8 +95,19 @@ while True:
         cv2.imwrite("board_snapshot.png", frame)
         cv2.imwrite("board_snapshot_marked.png", view)
         print("Saved board_snapshot.png and board_snapshot_marked.png")
+    elif k == ord('m') and solver:
+        if last_board is None or same_count < STABLE_FRAMES or "?" in last_board:
+            print("Wait for a stable board with all cells recognized.")
+            continue
+        payload = "".join(last_board)
+        solver.reset_input_buffer()
+        solver.write((payload + "\n").encode("ascii"))
+        response = solver.readline().decode("ascii", errors="replace").strip()
+        print(f"Pico for {payload}: {response or 'no response'}")
     elif k == ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
+if solver:
+    solver.close()

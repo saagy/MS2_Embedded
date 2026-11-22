@@ -124,3 +124,10 @@ target_link_libraries(test_link
 pico_enable_stdio_usb(test_link 1)
 pico_enable_stdio_uart(test_link 0)
 pico_add_extra_outputs(test_link)
+
+# ---- USB bench test: send a nine-cell board and read the solver decision ----
+add_executable(test_minimax_usb test_minimax_usb.c minimax.c)
+target_link_libraries(test_minimax_usb pico_stdlib)
+pico_enable_stdio_usb(test_minimax_usb 1)
+pico_enable_stdio_uart(test_minimax_usb 0)
+pico_add_extra_outputs(test_minimax_usb)
