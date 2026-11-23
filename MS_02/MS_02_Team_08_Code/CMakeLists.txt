@@ -1,7 +1,7 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-set(PICO_BOARD pico_w CACHE STRING "Board type")
+set(PICO_BOARD pico CACHE STRING "Board type")   # plain Raspberry Pi Pico (no Wi-Fi)
 
 # Works with PICO_SDK_PATH set as an env var or by the VS Code Pico extension
 if(NOT PICO_SDK_PATH AND DEFINED ENV{PICO_SDK_PATH})
@@ -131,3 +131,37 @@ target_link_libraries(test_minimax_usb pico_stdlib)
 pico_enable_stdio_usb(test_minimax_usb 1)
 pico_enable_stdio_uart(test_minimax_usb 0)
 pico_add_extra_outputs(test_minimax_usb)
+
+# ---- Hardware test: SG90 servo on GP28 (5 V from the L298N) ----
+add_executable(test_servo
+    test_servo.c
+    servo.c
+    button.c
+)
+target_link_libraries(test_servo
+    pico_stdlib
+    hardware_pwm
+)
+pico_enable_stdio_usb(test_servo 1)
+pico_enable_stdio_uart(test_servo 0)
+pico_add_extra_outputs(test_servo)
+
+# ---- Hardware test: ESP-01S Wi-Fi module on UART0 (GP0/GP1) ----
+add_executable(test_esp test_esp.c)
+target_link_libraries(test_esp
+    pico_stdlib
+    hardware_uart
+)
+pico_enable_stdio_usb(test_esp 1)
+pico_enable_stdio_uart(test_esp 0)
+pico_add_extra_outputs(test_esp)
+
+# ---- Wi-Fi test: laptop -> ESP-01S -> Pico Minimax -> back to laptop ----
+add_executable(test_wifi_minimax test_wifi_minimax.c minimax.c)
+target_link_libraries(test_wifi_minimax
+    pico_stdlib
+    hardware_uart
+)
+pico_enable_stdio_usb(test_wifi_minimax 1)
+pico_enable_stdio_uart(test_wifi_minimax 0)
+pico_add_extra_outputs(test_wifi_minimax)

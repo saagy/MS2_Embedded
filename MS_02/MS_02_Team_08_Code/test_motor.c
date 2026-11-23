@@ -3,7 +3,7 @@
 // SAFETY: the motors stay OFF until you press the button.
 //         Press again at any time = immediate stop.
 //
-// Sequence (repeats while enabled), for Motor X then Motor Y:
+// Sequence (repeats while enabled), for Motor X, then Motor Y, then Motor 3:
 //   forward 0 -> 100 % in 10 % steps, stop, reverse 0 -> -100 %, stop.
 // LED: off = disabled, green = forward, blue = reverse, red = stopped/pause.
 // Serial prints every step, e.g. "X  +40%".
@@ -20,7 +20,7 @@
 // One entry per step of the test: which motor, which speed
 typedef struct { char name; int speed; } step_t;
 
-static step_t seq[64];
+static step_t seq[96];
 static int nseq = 0;
 
 static void add_ramp(char name) {
@@ -32,15 +32,17 @@ static void add_ramp(char name) {
 
 int main(void) {
     stdio_init_all();
-    motor_t mx, my;
+    motor_t mx, my, m3;
     motor_init(&mx, MOTOR_X_EN, MOTOR_X_IN1, MOTOR_X_IN2);
     motor_init(&my, MOTOR_Y_EN, MOTOR_Y_IN1, MOTOR_Y_IN2);
+    motor_init(&m3, MOTOR_3_EN, MOTOR_3_IN1, MOTOR_3_IN2);
     rgb_init();
     button_t btn;
     button_init(&btn, BUTTON_PIN);
 
     add_ramp('X');
     add_ramp('Y');
+    add_ramp('3');
 
     bool enabled = false;
     int i = 0;
@@ -55,6 +57,7 @@ int main(void) {
             enabled = !enabled;
             motor_stop(&mx);
             motor_stop(&my);
+            motor_stop(&m3);
             i = 0;
             next = now;
             printf(enabled ? "=== ENABLED: motor test starting ===\n"
@@ -69,9 +72,11 @@ int main(void) {
             }
         } else if (now >= next) {
             step_t st = seq[i];
-            motor_t *m = (st.name == 'X') ? &mx : &my;
-            motor_t *other = (st.name == 'X') ? &my : &mx;
-            motor_stop(other);
+            motor_t *m = (st.name == 'X') ? &mx
+                       : (st.name == 'Y') ? &my : &m3;
+            if (m != &mx) motor_stop(&mx);
+            if (m != &my) motor_stop(&my);
+            if (m != &m3) motor_stop(&m3);
             motor_set(m, st.speed);
 
             if (st.speed > 0)      rgb_set(0, 255, 0);

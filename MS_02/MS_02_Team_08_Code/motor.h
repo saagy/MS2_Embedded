@@ -20,6 +20,11 @@
 #define MOTOR_Y_IN1   7   // GP7,  pin 10
 #define MOTOR_Y_IN2   8   // GP8,  pin 11
 
+// Motor 3: L298N #2 channel B
+#define MOTOR_3_EN    9   // GP9,  pin 12 (PWM slice 4B)
+#define MOTOR_3_IN1  20   // GP20, pin 26
+#define MOTOR_3_IN2  21   // GP21, pin 27
+
 #define MOTOR_PWM_HZ 1000 // 1 kHz PWM on the enable pin
 
 typedef struct {
